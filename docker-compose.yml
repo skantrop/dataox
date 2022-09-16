@@ -1,0 +1,26 @@
+version: '3.3'
+ 
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    volumes:
+      - data:/var/lib/postgresql/data
+  web:
+    build: .
+    command: sh -c "
+      python3 app/main.py"
+    container_name: dataox_web
+    volumes:
+      - static_volume:/app/storage
+    links:
+      - db
+    env_file:
+      - .env
+
+    extra_hosts:
+      - "host.docker.internal:172.19.0.2"
+
+volumes:
+  data:
+  static_volume:

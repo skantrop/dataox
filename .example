@@ -1,0 +1,6 @@
+.env example
+
+DB=
+USER=
+PASSWORD=
+HOST=

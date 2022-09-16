@@ -1,6 +1,8 @@
+from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
-
+from db_config import psql_db
+from db.models import Ads
 
 MAIN_URL = 'https://www.kijiji.ca'
 
@@ -23,30 +25,39 @@ def get_data_from_ads(soup:BeautifulSoup):
         title = ad.find('a', {'class':'title'}).text.strip()
         desc = ' '.join(ad.find('div', {'class':'description'}).text.split())
         location = ad.find('div', {'class':'location'}).find('span').text.strip()
-        # print(ad.find('span', {'class':'bedrooms'}).text)
         try:
             beds = int(ad.find('span', {'class':'bedrooms'}).text.replace(' + Den', '').split(':')[-1])
         except:
             beds = 1
         date = ad.find('span', {'class':'date-posted'}).text
+        if 'Yesterday' in date:
+            curr = datetime.now()
+            date = datetime( curr.year, curr.month, curr.day-1)
+        elif 'ago' in date:
+            date = datetime.now()
+        else:
+            dd, mm, yyyy = date.split('/')
+            date = datetime(int(yyyy), int(mm), int(dd))
         try:
             price = float(ad.find('div', {'class':'price'}).text.replace('\n', '').strip().replace(',', '').replace('$', ''))
         except:
-            price = float(0)
-    print(title, location, desc, date, image, beds, price)
+            price = 0.0
+        Ads.create(image=image, title=title, desc=desc, location=location, beds=beds, date=date, price=price)
 
 
 def main():
+    psql_db.create_tables([Ads])
     url = MAIN_URL + '/b-apartments-condos/city-of-toronto/c37l1700273'
     soup = get_page(url)
     next_page = get_next_page(url)
-    while next_page != None:
+    while next_page:
         get_data_from_ads(soup)
         url = MAIN_URL + next_page
         next_page = get_next_page(url)
-        # print(url)
+        print(url)
         soup = get_page(url)
     get_data_from_ads(soup)
+    psql_db.close()
 
 if __name__ == '__main__':
     main()
