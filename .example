@@ -1,6 +1,6 @@
 .env example
 
-DB=
-USER=
-PASSWORD=
-HOST=
+DB=<DB_NAME>
+USER=<DB_USER>
+PASSWORD=<DB_USER_PASS>
+HOST=<localhost> or <other.0.0.2>
